@@ -7,7 +7,7 @@ router = APIRouter()
 
 tags_cve_2017_9248 = "CVE-2017-9248"
 
-@router.post("/check-vuln-cve-2017-9248", tags=[tags_cve_2017_9248])
+@router.post("/api/check-vuln-cve-2017-9248", tags=[tags_cve_2017_9248])
 async def check_cve_2017_9248(sites: Optional[str] = Form(None), token: str = Depends(get_token_authorization), uploaded_file: UploadFile = File(None)):
     vuln_sites = []
 
