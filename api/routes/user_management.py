@@ -46,7 +46,7 @@ async def register(user: User_Info, token: str = Depends(get_token_authorization
         await db.users.insert_one(user_data)
         return {"message": "Đăng ký thành công"}
     else:
-        return {"message": "Loại người dùng không hợp lệ"}
+        raise HTTPException(status_code=401, detail="Loại người dùng không hợp lệ")
     
 
 @router.post("/api/Tao-loai-nguoi-dung", tags=[tags_user])
