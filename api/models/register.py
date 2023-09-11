@@ -1,11 +1,10 @@
 from fastapi import HTTPException, Depends
 from pydantic import BaseModel, Field, validator
-from passlib.context import CryptContext
+from argon2 import PasswordHasher
 from ..utils.db import get_database
-from motor.motor_asyncio import AsyncIOMotorClient
 import re
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+ph = PasswordHasher()
 
 class User_Info(BaseModel):
     username: str
@@ -46,9 +45,13 @@ class User_Type(BaseModel):
 
 # Hàm để tạo mật khẩu mã hóa Argon2 
 def hash_password(password: str):
-    return pwd_context.hash(password)
+    return ph.hash(password)
 
 # Hàm để kiểm tra mật khẩu 
 def verify_password(plain_password: str, hashed_password: str):
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        ph.verify(hashed_password, plain_password)
+        return True
+    except:
+        return False
 

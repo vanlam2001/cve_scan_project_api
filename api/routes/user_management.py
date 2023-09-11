@@ -5,6 +5,7 @@ from ..models.register import hash_password, verify_password
 from ..utils.db import get_database
 from ..utils.security import get_token_authorization
 from typing import List
+
 router = APIRouter()
 
 tags_auth = "Đăng nhập & Đăng ký"
@@ -43,23 +44,35 @@ async def register(user: User_Info, token: str = Depends(get_token_authorization
     await db.users.insert_one(user_data)
     return {"message": "Đăng ký thành công"}
 
-@router.post("/api/Dang-nhap", tags=[tags_auth])
-async def login(user_login: User_Login, db: AsyncIOMotorClient = Depends(get_database)):
-    # Lấy thông tin người dùng dựa trên tên người dùng
-    user_data = await db.users.find_one({"username": user_login.username})
-    
-    if user_data is None:
-        raise HTTPException(status_code=401, detail="Tài khoản không tồn tại")
-    
-    # Kiểm tra mật khẩu
-    if not verify_password(user_login.password, user_data["password"]):
-        raise HTTPException(status_code=401, detail="Sai mật khẩu")
 
-    # Ở đây, bạn có thể trả về thông tin người dùng sau khi đăng nhập thành công
-    # Chẳng hạn, trả về dữ liệu của người dùng trừ đi mật khẩu
-    user_data.pop("password", None)
+@router.post("/api/Dang-nhap", tags=[tags_auth])
+async def login(user_data: User_Login, db: AsyncIOMotorClient = Depends(get_database)):
     
-    return user_data
+
+    # Tìm người dùng trong cơ sở dữ liệu bằng tên đăng nhập
+    collection = db['users']
+    user = await collection.find_one({"username": user_data.username})
+    if user is None:
+        raise HTTPException(status_code=401, detail="Tài khoản không tồn tại")
+
+    # Xác minh mật khẩu
+    if not verify_password(user_data.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Sai mật khẩu")
+    
+    # Xác thực thành công, trả về thông tin tài khoản 
+    user_info = {
+        "username": user["username"],
+        "password": user["password"],
+        "email": user["email"],
+        "maLoaiNguoiDung": user["maLoaiNguoiDung"],
+        "tenLoai": user["tenLoai"],
+        "message": "Đăng nhập thành công"
+    }
+
+    return user_info
+
+
+
 
 
 @router.post("/api/Tao-loai-nguoi-dung", tags=[tags_user])

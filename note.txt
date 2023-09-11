@@ -1,1 +1,98 @@
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+
+
+
+from fastapi import APIRouter, Depends, HTTPException
+from motor.motor_asyncio import AsyncIOMotorClient
+from ..models.register import User_Info, User_Type, User_Login
+from ..models.register import hash_password, verify_password
+from ..utils.db import get_database
+from ..utils.security import get_token_authorization
+from typing import List
+import smtplib
+import random
+import string
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import re
+router = APIRouter()
+
+tags_auth = "Đăng nhập & Đăng ký"
+tags_user = "Quản lý người dùng"
+
+# Hàm để tạo mã xác minh ngẫu nhiên (ví dụ: mã OTP)
+def generate_verification_code():
+    code = ''.join(random.choice(string.digits) for _ in range(6))
+    return code
+
+# Hàm để gửi email xác minh qua ProtonMail
+def send_verification_email(to_email, verification_code):
+    # Thông tin đăng nhập vào tài khoản ProtonMail 
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 465
+    smtp_username = ""
+    smtp_password = ""
+
+    # Tạo đối tượng SMTP 
+    smtp = smtplib.SMTP(smtp_server, smtp_port)
+    smtp.starttls()
+    smtp.login(smtp_username, smtp_password)
+
+    # Tạo nội dung email
+    subject = "Xác minh tài khoản"
+    from_email = "th3pro61398@gmail.com"
+    to_email = to_email
+    msg = MIMEMultipart()
+    msg["From"] = from_email
+    msg["To"] = to_email
+    msg["Subject"] = subject
+
+    # Nội dung email 
+    body = f"Chào mừng bạn đến với zone-vn. Mã xác minh của bạn là: {verification_code}"
+    msg.attach(MIMEText(body, "plain"))
+
+    # Gửi email 
+    smtp.sendmail(from_email, to_email, msg.as_string())
+
+    # Đóng kết nối SMTP 
+    smtp.quit()
+
+
+@router.post("/api/Dang-ky", tags=[tags_auth])
+async def register(user: User_Info, db: AsyncIOMotorClient = Depends(get_database)):
+    user_data = user.dict()
+
+    # Kiểm tra xem tài khoản đã tồn tại chưa
+    existing_user = await db.users.find_one({"username": user_data["username"]})
+    if existing_user:
+        return {"message": "Tài khoản đã tồn tại"}
+
+    # Kiểm tra xem email đã tồn tại chưa
+    existing_email = await db.users.find_one({"email": user_data["email"]})
+    if existing_email:
+        return {"message": "Email đã tồn tại"}
+
+    # Kiểm tra mật khẩu trùng khớp
+    if user_data["password"] != user_data["confirm_password"]:
+        return {"message": "Mật khẩu không khớp nhau"}
+
+    # Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
+    hashed_password = hash_password(user_data["password"])
+    user_data["password"] = hashed_password
+    del user_data["confirm_password"]
+
+    # Thêm giá trị mặc định cho maLoaiNguoiDung và tenLoai
+    user_data["maLoaiNguoiDung"] = "user"
+    user_data["tenLoai"] = "Người dùng"
+
+    # Lưu thông tin người dùng vào MongoDB
+    await db.users.insert_one(user_data)
+
+    # Tạo và gửi mã xác minh qua email
+    verification_code = generate_verification_code()
+    try:
+        send_verification_email(user_data["email"], verification_code)
+    except Exception as e:
+        return {"message": "Đã có lỗi xảy ra khi gửi email xác minh. Vui lòng thử lại sau."}
+
+    return {"message": "Đăng ký thành công"}
