@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
-from ..models.register import User_Info, User_Type
-from ..models.register import verify_password, get_password_hash
+from ..models.register import User_Info, User_Type, User_Login
+from ..models.register import hash_password, verify_password
 from ..utils.db import get_database
 from ..utils.security import get_token_authorization
 from typing import List
@@ -23,31 +23,44 @@ async def register(user: User_Info, token: str = Depends(get_token_authorization
     existing_email = await db.users.find_one({"email": user_data["email"]})
     if existing_email:
         return {"message": "Email đã tồn tại"}
-    # Kiểm tra xem phone_number đã tồn tại chưa 
-    existing_phone_number = await db.users.find_one({"phone_number": user_data["phone_number"]})
-    if existing_phone_number:
-        return {"message": "Số điện thoại đã tồn tại"}
+    
+
     
     # Kiểm tra mật khẩu trùng khớp 
     if user_data["password"] != user_data["confirm_password"]:
         return {"message": "Mật khẩu không khớp nhau"}
 
     # Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
-    hashed_password = get_password_hash(user_data["password"])
+    hashed_password = hash_password(user_data["password"])
     user_data["password"] = hashed_password
     del user_data["confirm_password"]
-
-    # Lấy thông tin loại người dùng từ cơ sở dữ liệu
-    user_type = await db.loai_nguoi_dung.find_one({"maLoaiNguoiDung": user_data["maLoaiNguoiDung"]})
-    if user_type:
-        user_data["tenLoai"] = user_type["tenLoai"]
-
-        # Lưu thông tin người dùng vào MongoDB
-        await db.users.insert_one(user_data)
-        return {"message": "Đăng ký thành công"}
-    else:
-        raise HTTPException(status_code=401, detail="Loại người dùng không hợp lệ")
     
+    # Thêm giá trị mặc định cho maLoaiNguoiDung và tenLoai
+    user_data["maLoaiNguoiDung"] = "user"
+    user_data["tenLoai"] = "Người dùng"
+
+     # Lưu thông tin người dùng vào MongoDB
+    await db.users.insert_one(user_data)
+    return {"message": "Đăng ký thành công"}
+
+@router.post("/api/Dang-nhap", tags=[tags_auth])
+async def login(user_login: User_Login, db: AsyncIOMotorClient = Depends(get_database)):
+    # Lấy thông tin người dùng dựa trên tên người dùng
+    user_data = await db.users.find_one({"username": user_login.username})
+    
+    if user_data is None:
+        raise HTTPException(status_code=401, detail="Tài khoản không tồn tại")
+    
+    # Kiểm tra mật khẩu
+    if not verify_password(user_login.password, user_data["password"]):
+        raise HTTPException(status_code=401, detail="Sai mật khẩu")
+
+    # Ở đây, bạn có thể trả về thông tin người dùng sau khi đăng nhập thành công
+    # Chẳng hạn, trả về dữ liệu của người dùng trừ đi mật khẩu
+    user_data.pop("password", None)
+    
+    return user_data
+
 
 @router.post("/api/Tao-loai-nguoi-dung", tags=[tags_user])
 async def create_loai_nguoi_dung(loai_nguoi_dung: User_Type, db: AsyncIOMotorClient = Depends(get_database)):
