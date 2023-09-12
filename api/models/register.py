@@ -10,7 +10,6 @@ class User_Info(BaseModel):
     username: str
     password: str 
     confirm_password: str
-    email: str
 
     @validator("confirm_password")
     def passwords_match(cls, confirm_password, values):
@@ -27,11 +26,7 @@ class User_Info(BaseModel):
             raise HTTPException(status_code=401, detail="Vui lòng chọn một mật khẩu mạnh hơn")
         return password
     
-    @validator("email")
-    def validate_email_format(cls, email):
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            raise HTTPException(status_code=401, detail="Email không hợp lệ")
-        return email
+    
 
 class User_Login(BaseModel):
     username: str
