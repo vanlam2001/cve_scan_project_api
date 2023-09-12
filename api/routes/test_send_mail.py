@@ -15,7 +15,7 @@ class EmailData(BaseModel):
 async def send_email(email_data: EmailData):
     # Thông tin tài khoản email của bạn
     sender_email = "lam213181@gmail.com"
-    sender_password = ""
+    sender_password = "iovkjbicmemaisjf"
 
     # Tạo nội dung email
     msg = MIMEText(email_data.message)
