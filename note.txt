@@ -136,3 +136,27 @@ async def resend_otp(email: str,token: str = Depends(get_token_authorization) , 
             return {"message": "Đã gửi mã OTP mới qua email."}
     else:
         return {"message": "Không tìm thấy tài khoản với địa chỉ email này."}
+
+
+
+Lỗi HTTP 400 là một mã lỗi phổ biến trong giao tiếp với API, nó thường được gọi là "Bad Request" và xuất hiện khi máy chủ không thể hiểu hoặc xử lý yêu cầu từ phía client. Dưới đây là một số ví dụ về lỗi 400 và một số lỗi phổ biến khác khi gọi API:
+
+Lỗi 400 - Bad Request: Đây là trường hợp cơ bản của lỗi 400, thường xuất hiện khi dữ liệu gửi đến máy chủ không đúng định dạng hoặc bị thiếu thông tin cần thiết.
+
+Lỗi 401 - Unauthorized: Lỗi này xảy ra khi bạn cố gắng truy cập một tài nguyên cần xác thực mà bạn không có quyền truy cập hoặc bạn đã cung cấp thông tin xác thực không hợp lệ.
+
+Lỗi 403 - Forbidden: Lỗi này xảy ra khi bạn đã xác thực thành công nhưng bạn không được phép truy cập tài nguyên cụ thể.
+
+Lỗi 404 - Not Found: Máy chủ không thể tìm thấy tài nguyên được yêu cầu. Điều này thường xảy ra khi bạn cố gắng truy cập một URL không tồn tại.
+
+Lỗi 405 - Method Not Allowed: Lỗi này xảy ra khi bạn sử dụng phương thức HTTP không hợp lệ cho tài nguyên cụ thể. Ví dụ, bạn cố gắng sử dụng phương thức POST cho một tài nguyên chỉ cho phép phương thức GET.
+
+Lỗi 500 - Internal Server Error: Lỗi này xảy ra khi máy chủ gặp sự cố không mong muốn khi xử lý yêu cầu của bạn. Điều này có thể là do mã lỗi máy chủ hoặc lỗi lập trình.
+
+Lỗi 503 - Service Unavailable: Lỗi này xuất hiện khi máy chủ không hoạt động hoặc tạm ngừng hoạt động do bảo trì hoặc quá tải.
+
+Lỗi 429 - Too Many Requests: Lỗi này xuất hiện khi bạn đã gửi quá nhiều yêu cầu trong một khoảng thời gian ngắn. Thường đi kèm với nó là một số thông điệp về giới hạn tốc độ của máy chủ.
+
+Lỗi 502 - Bad Gateway: Lỗi này xảy ra khi máy chủ proxy hoặc cổng (gateway) trung gian gặp sự cố khi gửi yêu cầu đến máy chủ đích.
+
+Lưu ý rằng mã lỗi có thể được mở rộng bằng các mã lỗi tùy chỉnh để cung cấp thông tin chi tiết hơn về lỗi cụ thể. Khi phát triển hoặc sử dụng API, quan trọng để xem xét mã lỗi và thông điệp lỗi để hiểu tình trạng của yêu cầu và xử lý nó một cách phù hợp.

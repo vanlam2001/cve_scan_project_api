@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from typing import Dict
+
 import json
 from ..models.url_input import Url_Input
 import requests
@@ -22,9 +22,9 @@ async def scan_cve_2017_5487(input_data: Url_Input):
     try:
         json_data = url_exploit.json()  # Lấy dữ liệu JSON từ phản hồi
         if not json_data:
-            return {"message": "No users found"}
+            return {"message": "Không tìm thấy user"}
     except json.JSONDecodeError:
-        return {"message": "Invalid JSON data"}
+        raise HTTPException(status_code=400, detail="Dữ liệu JSON không hợp lệ")
 
     users_info = []
     for user in json_data:
