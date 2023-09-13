@@ -8,7 +8,7 @@ router = APIRouter()
 tags_cve_2017_5487  = "CVE-2017-5487"
 
 
-@router.post("/check-vuln-cve-2017-5487" , tags=[tags_cve_2017_5487])
+@router.post("/api/check-vuln-cve-2017-5487" , tags=[tags_cve_2017_5487])
 async def scan_cve_2017_5487(input_data: Url_Input):
     url = input_data.url
     payload = "/wp-json/wp/v2/users/"
@@ -36,4 +36,4 @@ async def scan_cve_2017_5487(input_data: Url_Input):
             }
         )
 
-    return {"message": "Users information scanned successfully", "users": users_info}
+    return {"message": "Quét người dùng thành công", "users": users_info}

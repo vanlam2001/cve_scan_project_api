@@ -2,7 +2,7 @@ from fastapi import HTTPException, Depends
 from pydantic import BaseModel, Field, validator
 from argon2 import PasswordHasher
 from ..utils.db import get_database
-import re
+
 
 ph = PasswordHasher()
 
