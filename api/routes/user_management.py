@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorClient
+from starlette.requests import Request
 from ..models.register import User_Info, User_Type, User_Login
 from ..models.register import hash_password, verify_password
 from ..utils.db import get_database
 from ..utils.security import get_token_authorization
 from typing import List
+from datetime import datetime
 
 
 router = APIRouter()
@@ -13,7 +15,7 @@ tags_auth = "Đăng nhập & Đăng ký"
 tags_user = "Quản lý người dùng"
 
 @router.post("/api/Dang-ky", tags=[tags_auth])
-async def register(user: User_Info, token: str = Depends(get_token_authorization), db: AsyncIOMotorClient = Depends(get_database)):
+async def register(request: Request,user: User_Info, token: str = Depends(get_token_authorization), db: AsyncIOMotorClient = Depends(get_database)):
     user_data = user.dict()
 
     # Kiểm tra xem tài khoản đã tồn tại chưa 
@@ -34,6 +36,10 @@ async def register(user: User_Info, token: str = Depends(get_token_authorization
     # Thêm giá trị mặc định cho maLoaiNguoiDung và tenLoai
     user_data["maLoaiNguoiDung"] = "user"
     user_data["tenLoai"] = "Người dùng"
+
+    # Lưu thông tin địa chỉ IP và ngày tạo tài khoản vào MongoDB
+    user_data["ip_address"] = request.client.host  # Địa chỉ IP của người dùng
+    user_data["created_at"] = datetime.now()  # Ngày tạo tài khoản
 
     # Lưu thông tin người dùng vào MongoDB
     await db.users.insert_one(user_data)
