@@ -47,7 +47,7 @@ async def login(user_data: User_Login,token: str = Depends(get_token_authorizati
     collection = db['users']
     user = await collection.find_one({"username": user_data.username})
     if user is None:
-        raise HTTPException(status_code=401, detail="Tài khoản không tồn tại")
+        raise HTTPException(status_code=404, detail="Tài khoản không tồn tại")
 
     # Xác minh mật khẩu
     if not verify_password(user_data.password, user["password"]):
