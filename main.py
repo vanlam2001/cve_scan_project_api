@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import check_cve_2017_9248, check_cve_2017_5487, user_management, test_send_mail, check_cve_2020_0796, exploit_cve_2020_0796
+from api.routes import check_cve_2017_9248, check_cve_2017_5487, user_management, test_send_mail, check_cve_2020_0796, exploit_cve_2020_0796, web_archive
 
 
 app = FastAPI()
