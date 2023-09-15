@@ -9,7 +9,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://zone-vn.vercel.app"
+        "https://zone-vn.vercel.app",
+        "http://192.168.35.106:5173"
     ],
     allow_credentials=True,
     allow_methods=["*"],
