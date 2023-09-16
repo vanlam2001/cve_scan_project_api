@@ -10,6 +10,7 @@ class User_Info(BaseModel):
     username: str
     password: str 
     confirm_password: str
+    recovery_password: str
 
     @validator("confirm_password")
     def passwords_match(cls, confirm_password, values):
@@ -26,7 +27,11 @@ class User_Info(BaseModel):
             raise HTTPException(status_code=401, detail="Vui lòng chọn một mật khẩu mạnh hơn")
         return password
     
-    
+class Recovery_Password(BaseModel):
+    username: str
+    recovery_password: str
+    new_password: str
+    confirm_password: str
 
 class User_Login(BaseModel):
     username: str

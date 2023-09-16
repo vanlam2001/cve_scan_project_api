@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorClient
 from starlette.requests import Request
-from ..models.register import User_Info, User_Type, User_Login
+from ..models.register import User_Info, User_Type, User_Login, Recovery_Password
 from ..models.register import hash_password, verify_password
 from ..utils.db import get_database
 from ..utils.security import get_token_authorization
@@ -13,6 +13,7 @@ router = APIRouter()
 
 tags_auth = "Đăng nhập & Đăng ký"
 tags_user = "Quản lý người dùng"
+tags_password = "Khôi phục mật khẩu"
 
 @router.post("/api/Dang-ky", tags=[tags_auth])
 async def register(request: Request,user: User_Info, token: str = Depends(get_token_authorization), db: AsyncIOMotorClient = Depends(get_database)):
@@ -41,9 +42,41 @@ async def register(request: Request,user: User_Info, token: str = Depends(get_to
     user_data["ip_address"] = request.client.host  # Địa chỉ IP của người dùng
     user_data["created_at"] = datetime.now()  # Ngày tạo tài khoản
 
+    # Lưu thông tin mật khẩu phụ vào MongoDB 
+    user_data["recovery_password"] = user_data["recovery_password"]
+
     # Lưu thông tin người dùng vào MongoDB
     await db.users.insert_one(user_data)
     return {"message": "Đăng ký thành công"}
+
+@router.post("/api/Khoi-phuc-mat-khau", tags=[tags_password])
+async def reset_password(request: Request, recovery_password: Recovery_Password, db: AsyncIOMotorClient = Depends(get_database)):
+    # Tìm người dùng theo tên đăng nhập 
+    collection = db['users']
+    user = await collection.find_one({"username": recovery_password.username})
+
+    if user is None:
+        return {"message": "Tài khoản đã tồn tại"}
+    
+    # Kiểm tra mật khẩu cấp 2 mà người dùng đã tạo 
+    if user["recovery_password"] != recovery_password.recovery_password:
+        return {"message": "Mật khẩu khôi phục không đúng"}
+    
+    # Kiểm tra mật khẩu mới và mật khẩu xác nhận 
+    if recovery_password.new_password != recovery_password.confirm_password:
+        return {"message": "Mật khẩu không khớp"}
+    
+    # Mã hóa mật khẩu mới 
+    hashed_password = hash_password(recovery_password.new_password)
+
+    # Cập nhật mật khẩu mới cho người dùng 
+    await collection.update_one({"username": recovery_password.username},{"$set": {"password": hashed_password}})
+
+    return {"message": "Mật khẩu đã được đặt lại thành công"}
+
+    
+
+
 
 @router.post("/api/Dang-nhap", tags=[tags_auth])
 async def login(user_data: User_Login,token: str = Depends(get_token_authorization) ,db: AsyncIOMotorClient = Depends(get_database)):
