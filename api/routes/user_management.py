@@ -56,15 +56,15 @@ async def reset_password(request: Request, recovery_password: Recovery_Password,
     user = await collection.find_one({"username": recovery_password.username})
 
     if user is None:
-        return {"message": "Tài khoản đã tồn tại"}
+        raise HTTPException(status_code=404, detail='Không tìm thấy tài khoản')
     
     # Kiểm tra mật khẩu cấp 2 mà người dùng đã tạo 
     if user["recovery_password"] != recovery_password.recovery_password:
-        return {"message": "Mật khẩu khôi phục không đúng"}
+        raise HTTPException(status_code=401, detail='Mật khẩu cấp 2 không đúng')
     
     # Kiểm tra mật khẩu mới và mật khẩu xác nhận 
     if recovery_password.new_password != recovery_password.confirm_password:
-        return {"message": "Mật khẩu không khớp"}
+        raise HTTPException(status_code=400, detail="Mật khẩu không khớp")
     
     # Mã hóa mật khẩu mới 
     hashed_password = hash_password(recovery_password.new_password)
